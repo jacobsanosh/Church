@@ -16,7 +16,13 @@ def valid_email(email):
 async def userLogin(user:userLogin,db:Session=Depends(get_db)):   
     if not(user.username or user.password):
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,content={"message":"both username and password are required"})
-        
+    existing_user=db.query(User).filter(User.username==user.username).first()
+    if not existing_user:
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,content={"message":"User with these credentials does not exists"})
+    if not bcrypt.checkpw(user.password.encode('utf-8'),existing_user.password.encode('utf-8')):
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,content={"message":"Incorrect password"})
+    return JSONResponse(status_code=status.HTTP_200_OK,content={"message":"Logged in successfully"})
+
 @router.post('/register')
 async def userRegister(user:userRegister,db:Session=Depends(get_db)):
     try:
